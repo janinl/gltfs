@@ -4,25 +4,29 @@ var squirrelMesh;
 
 //End of Tree generator code
 
-var createScene = function () {
+var createScene = async function () {
 	var scene = new BABYLON.Scene(engine);
 
-	const plane = BABYLON.MeshBuilder.CreatePlane("plane", { height: 20, width: 10 });
+	const plane = BABYLON.MeshBuilder.CreatePlane("plane", { height: 50, width: 100 });
 	plane.rotation.x = Math.PI / 2
 	var myMaterial = new BABYLON.StandardMaterial("myMaterial7", scene);
 	myMaterial.diffuseColor = new BABYLON.Color3(0.13, 0.53, 0.2);
 	plane.material = myMaterial;
 
-	BABYLON.SceneLoader.ImportMesh("", "https://raw.githubusercontent.com/janinl/gtlfs/main/",
-		"ThirdSquirrel_rigged4b_export3.gltf", scene, function (meshes) {
-			squirrelMesh = meshes[0]
-			//scene.createDefaultCameraOrLight(true, true, true);
-			//scene.createDefaultEnvironment();
-			squirrelMesh.position.x = 2
-			squirrelMesh.position.y = 1.3
-			squirrelMesh.rotation = new BABYLON.Vector3(0, 0, 0);
-			//meshes[0].scaling = new BABYLON.Vector3(10,1,10)
-		});
+	let squirrel = await BABYLON.SceneLoader.ImportMeshAsync("", "https://raw.githubusercontent.com/janinl/gtlfs/main/",
+		"ThirdSquirrel_rigged4b_export3.gltf", scene);
+
+	squirrelMesh = squirrel.meshes[0]
+	//scene.createDefaultCameraOrLight(true, true, true);
+	//scene.createDefaultEnvironment();
+	squirrelMesh.position.x = 5
+	squirrelMesh.position.y = 1.3
+	squirrelMesh.position.z = -3
+	squirrelMesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+	//squirrel.meshes[0].scaling = new BABYLON.Vector3(10,1,10)
+	
+		
+
 
 	scene.onKeyboardObservable.add((kbInfo) => {
 		switch (kbInfo.type) {
@@ -53,18 +57,85 @@ var createScene = function () {
 				if (kbInfo.event.key == 'e') {
 					squirrelMesh.rotation.y--
 				}
+				if (kbInfo.event.key == 'z') {
+					squirrel.animationGroups[0].stop()
+				}
+				if (kbInfo.event.key == 'x') {
+					squirrel.animationGroups[0].start()
+				}
+				if (kbInfo.event.key == 'c') {
+        console.log('squirrel:', squirrel)
+        console.log('squirrelMesh:', squirrelMesh)
+        /*
+for(var i=0,length=squirrel.skeletons[0].bones.length;i<length;i++){
+            console.log("Bone name: " + squirrel.skeletons[0].bones[i].name + " At Index: " + i);
+        }
+        */
+        //					squirrel.animationGroups[0].start(true,3)
+		var skeleton = squirrel.skeletons[0];
+//skeleton.returnToRest();
+        console.log('skeleton:', skeleton)
+		//var animation = scene.beginAnimation(skeleton, 0, 100, true, 1.0);
+        //console.log('animation:', animation)
+		var bone = skeleton.bones[2];
+        console.log('bone:', bone)
+		var scale = 10;
+		bone.scale(scale, scale, scale, true);
+		var bone1AxesViewer = new BABYLON.Debug.BoneAxesViewer(scene, bone, squirrelMesh);
+			bone.rotate(BABYLON.Axis.Z, .1, BABYLON.Space.WORLD, squirrelMesh);
+
+		var transformNode = squirrel.transformNodes[4];
+        console.log('transformNode:', transformNode);
+        //transformNode.rotate(BABYLON.Axis.Z, .1);
+		//transformNode.scale(scale, scale, scale, true);
+
+        transformNode.rotation.y += 0.1;
+        console.log('transformNode.rotation:', transformNode.rotation);
+				}
 				break;
 			case BABYLON.KeyboardEventTypes.KEYUP:
 				console.log("KEY UP: ", kbInfo.event.keyCode);
 				break;
 		}
+
 	});
 
 
+ var mesh_tail001 = scene.getMeshByName('tail.001')
+        console.log('mesh_tail001:', mesh_tail001);
+ var transformNode_tail001 = scene.getTransformNodeByName('tail.001')
+        console.log('transformNode_tail001:', transformNode_tail001);
 
 
+        var transformNode = new BABYLON.TransformNode("root22");
+    //var ground = BABYLON.Mesh.CreateGround("ground1", 6, 6, 2, scene);
 
-	//scene.debugLayer.show()
+    squirrelMesh.parent = transformNode;
+    var increment = 0, count
+
+        scene.registerBeforeRender(function() {
+            //transformNode.rotation.y += 0.1;
+            //transformNode_tail001.position.y += 0.1;
+        console.log('transformNode_tail001:.rotationQuaternion', transformNode_tail001.rotationQuaternion);
+            if (transformNode_tail001.rotationQuaternion) {
+                const euler = transformNode_tail001.rotationQuaternion.toEulerAngles();
+                transformNode_tail001.rotationQuaternion = null;
+                transformNode_tail001.rotation = euler;
+                increment = 0.01
+                count = 50
+            }
+            if (increment) {
+                transformNode_tail001.rotation.x += increment;
+                if (count--==0) {
+                    increment = -increment
+                    count = 50
+                }
+            }
+            //squirrel.transformNodes[2].rotation.y += 0.1;
+        });
+
+
+	scene.debugLayer.show()
 
 
 
